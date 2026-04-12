@@ -1,28 +1,43 @@
-// export default async function apiClient(path, options = {}) {
-export default async function apiClient(owner, repo, options = {}) {
-    try { 
-        const url = `https://api.github.com/repos/${owner}/${repo}/releases/latest`;   
-        //const URL = `https://api.github.com/repos/${path}`;
-
-        const { headers: headersOpt, ...resOpt } = options;
-
-        const response = await fetch(URL, {
-            ...resOpt,
-            headers: {
+function getHeaders () {
+    const headers = {
                 'Accept': 'application/vnd.github+json',
                 'X-GitHub-Api-Version': '2022-11-28',
                 'User-Agent': 'My-Release-Notifier-App',
-                ...headersOpt,
-            },
+            };
+
+    if (process.env.GITHUB_TOKEN) headers['Authorization'] = `Bearer ${process.env.GITHUB_TOKEN}`;
+
+    return headers;
+}
+
+export default async function apiClient(url) {
+    let response;
+    try { 
+        response = await fetch(url, { 
+            headers: getHeaders(),
         });
 
-        if (!response.ok) {
-            throw new Error(response.status);
-        }
+        if (response.ok) return response.json();
 
-        const result = await response.json();
-        return result;
-    } catch (err) {
-        return handleErrors(err.message || err);
-    }
+    } catch (error) {
+        const err = new Error('Failed to reach GitHub API');
+        err.status = 502;
+        throw err;
+    } 
+        if (response.status === 404) {
+            const err = new Error('Resource not found');
+            err.status= 404;
+            throw err;
+        };
+
+        if (response.status === 429 || response.status === 403) {
+            const retryAfterSec =
+                response.headers.get('retry-after') ||
+                response.headers.get('x-ratelimit-reset');
+
+            const err = new Error('GitHub API rate limit exceeded');
+            err.status= 429;
+            err.retryAfter = retryAfterSec;
+            throw err;
+        }
 }
