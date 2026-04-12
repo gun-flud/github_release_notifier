@@ -1,4 +1,5 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config();
 import runMigrations from './db/migration.manager.js';
 
 async function server () {
@@ -8,7 +9,7 @@ async function server () {
         await runMigrations();
     } catch (err) {
         console.error('[Error]', err.message);
-        process.exit(-1);
+        process.exit(1);
     }
 }
 
