@@ -15,15 +15,10 @@ export async function verifyRepository (path) {
         throw err;
     }
 
-    try {
         const url = `https://api.github.com/repos/${path}`;
         const data = await apiClient(url);
-        
+
         return data
-    } catch (err) {
-        console.error(err);
-    }
-    
 }
 
 export async function getLatestRelease(path) {
