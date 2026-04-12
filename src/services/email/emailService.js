@@ -1,7 +1,7 @@
 import path from "node:path";
 import fs from "node:fs/promises";
 import nodemailer from "nodemailer";
-import { TEMPLATES_DIR } from "../utils/paths.js";
+import { TEMPLATES_DIR } from "../../utils/paths.js";
 
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
