@@ -1,5 +1,7 @@
 import crypto from 'node:crypto';
 
+import surbscribeDB from '../db/surbscribeDB.js';
+import { sendConfirmationEmail } from './email/emailService.js';
 import {
     isValidRepoFormat,
     verifyRepository,
@@ -14,7 +16,9 @@ export async function subscribeService(reqBody) {
 
         const data = await verifyRepository(repo);
 
-        //await surbscribeDB(data, confirmToken, unsubscribeToken);//will be for storing values into server
+        await surbscribeDB(email, repo, confirmToken, unsubscribeToken);//will be for storing values into server
+
+        await sendConfirmationEmail(email, confirmToken, repo);
 
         const returnVal = {
             status: 201,

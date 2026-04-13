@@ -25,6 +25,6 @@ export async function subscriptions (req, res) {
 async function dataHandler(fn, res) {
     const response = await fn;
 
-    res.code((await response).status).send((await response).message)
+    res.code(response.status).send(response.message)
 }
 
