@@ -4,8 +4,9 @@
   "description": "GitHub Release Notification API",
   "main": "app.js",
   "scripts": {
+    "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test:e2e": "pwsh ./tests/e2e.ps1"
   },
   "keywords": [],
   "author": "Vlad Ivannykov",
