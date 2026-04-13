@@ -1,14 +1,26 @@
-import Fastify from "fastify";
+import Fastify from "fastify"; 
 import dotenv from "dotenv";
 dotenv.config();
 
 import routes from "./routes/router.js";
 import runMigrations from "./db/migration.manager.js";
+import startScanner from "./services/scanner.service.js";
 
 const PORT = parseInt(process.env.PORT || "3000");
 
 const fastify = Fastify({
-    logger: true,
+    logger: process.env.NODE_ENV === 'production' 
+        ? true 
+        : {    
+            transport: {
+                target: 'pino-pretty',
+                options: {
+                    translateTime: 'HH:MM:ss Z',
+                    ignore: 'pid,hostname',
+                    colorize: true,
+                }
+            }
+        }
 });
 
 const port = {
@@ -44,6 +56,9 @@ fastify.register(routes, { prefix: "/api" });
 
 try {
     await runMigrations();
+
+    startScanner(fastify);
+
     await fastify.listen(port);
 } catch (err) {
     fastify.log.fatal(err);

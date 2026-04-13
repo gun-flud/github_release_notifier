@@ -2,7 +2,7 @@ import {
     subscribeService,
     confirmSubscriptionService,
     unsubscribeService,
-    subscriptionsService } from '../services/subscriptionService.js'
+    subscriptionsService } from '../services/subscription.service.js'
 export async function subscribe (req, res) {
 //     const response = subscribeService(req.body);
 //     res.code((await response).status).send((await response).message);

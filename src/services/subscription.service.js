@@ -1,11 +1,11 @@
 import crypto from "node:crypto";
 
-import surbscribeDB from "../db/surbscribeDB.js";
-import confirmSubscriptionDB from "../db/confirmSubscriptionDB.js";
-import unsubscribeDB from "../db/unsubscribeDB.js";
-import selectSubscriptionsDB from "../db/selectSubscriptionsDB.js";
+import surbscribeDB from "../repositories/surbscribeDB.js";
+import confirmSubscriptionDB from "../repositories/confirmSubscriptionDB.js";
+import unsubscribeDB from "../repositories/unsubscribeDB.js";
+import selectSubscriptionsDB from "../repositories/selectSubscriptionsDB.js";
 import { sendConfirmationEmail } from "./email/emailService.js";
-import { verifyRepository } from "./githubService.js";
+import { verifyRepository } from "./github.service.js";
 
 export async function subscribeService(reqBody) {
     try {
