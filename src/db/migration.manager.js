@@ -54,7 +54,9 @@ async function runMigrations() {
         console.error("failed to migrate", err.message);
         throw err;
     } finally {
-        client.release();
+        if (client) {
+            client.release();
+        }
     }
 }
 

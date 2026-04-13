@@ -4,8 +4,10 @@
   "description": "GitHub Release Notification API",
   "main": "app.js",
   "scripts": {
+    "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test:e2e": "node -e \"if (process.platform !== 'win32') { console.error('test:e2e is currently Windows-only. Run a cross-platform e2e runner when available, or use npm run test:e2e:win on Windows.'); process.exit(1); }\" && npm run test:e2e:win",
+    "test:e2e:win": "pwsh ./tests/e2e.ps1"
   },
   "keywords": [],
   "author": "Vlad Ivannykov",
