@@ -1,40 +1,81 @@
 # GitHub Release Notifier
 
-GitHub Release Notifier is a lightweight API that lets users subscribe to email updates for new releases in any public GitHub repository. It verifies repositories through the GitHub API, stores confirmed subscriptions in PostgreSQL, and sends release notifications automatically when a new version is detected.
+A production-style API that lets users subscribe to GitHub repositories and receive email notifications when new releases are published.
 
-## What it does
+<p align="left">
+  <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js" />
+  <img src="https://img.shields.io/badge/Fastify-000000?style=for-the-badge&logo=fastify&logoColor=white" alt="Fastify" />
+  <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+  <img src="https://img.shields.io/badge/Nodemailer-0A66C2?style=for-the-badge&logo=maildotru&logoColor=white" alt="Nodemailer" />
+  <img src="https://img.shields.io/badge/node--cron-222222?style=for-the-badge&logo=clockify&logoColor=white" alt="node-cron" />
+  <img src="https://img.shields.io/badge/MailHog-FF6B00?style=for-the-badge&logo=mailgun&logoColor=white" alt="MailHog" />
+  <img src="https://img.shields.io/badge/GitHub%20API-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub API" />
+</p>
+
+## Table of Contents
+
+- [What This Project Does](#what-this-project-does)
+- [How It Works](#how-it-works)
+- [Project Structure](#project-structure)
+- [Quick Start (Local)](#quick-start-local)
+- [Quick Start (Docker)](#quick-start-docker)
+- [Environment Variables](#environment-variables)
+- [API Reference](#api-reference)
+- [Testing](#testing)
+- [Troubleshooting](#troubleshooting)
+- [Roadmap Ideas](#roadmap-ideas)
+- [License](#license)
+
+## What This Project Does
 
 - Accepts subscriptions for repositories in `owner/repo` format.
-- Sends a confirmation email before activating a subscription.
-- Tracks confirmed subscriptions in PostgreSQL.
-- Periodically scans GitHub releases and sends notification emails when a new release appears.
-- Supports unsubscription through a secure tokenized link.
+- Validates repository existence using the GitHub API.
+- Sends confirmation email before enabling notifications.
+- Scans subscribed repositories on a schedule.
+- Notifies confirmed users when a new release is published.
+- Supports one-click unsubscribe with tokenized links.
 
-## Tech Stack
+## How It Works
 
-- Node.js
-- Fastify
-- PostgreSQL
-- Nodemailer
-- node-cron
-- dotenv
+```mermaid
+flowchart TD
+    A[User sends POST /api/subscribe] --> B[Validate owner/repo format]
+    B --> C[Verify repository via GitHub API]
+    C --> D[Store pending subscription in PostgreSQL]
+    D --> E[Send confirmation email]
+    E --> F[User confirms via /api/confirm/:token]
+    F --> G[Subscription marked confirmed]
+    G --> H[Cron scanner checks latest releases]
+    H --> I{New release tag?}
+    I -- Yes --> J[Update last_seen and send release emails]
+    I -- No --> K[Skip]
+```
 
-## Folder Structure
+## Project Structure
 
 ```text
 github_release_notifier/
-├── README.md
+├── compose.yaml
+├── Dockerfile
 ├── package.json
+├── README.md
 ├── LICENSE
 ├── src/
 │   ├── app.js
 │   ├── controller/
 │   │   └── subscriptionsController.js
-│   ├── db/
-│   │   ├── migrations/
-│   │   │   └── 01_scheme.sql
-│   │   ├── migration.manager.js
-│   │   ├── pool.js
+│   ├── routes/
+│   │   └── router.js
+│   ├── services/
+│   │   ├── api.service.js
+│   │   ├── github.service.js
+│   │   ├── scanner.service.js
+│   │   ├── subscription.service.js
+│   │   └── email/
+│   │       └── emailService.js
+│   ├── repositories/
+│   │   ├── confirmSubscriptionDB.js
 │   │   ├── selectSubscriptionsDB.js
 │   │   ├── surbscribeDB.js
 │   │   ├── unsubscribeDB.js
@@ -42,55 +83,39 @@ github_release_notifier/
 │   │       ├── getSubscribersForRepoDB.js
 │   │       ├── scanDB.js
 │   │       └── updateLastSeenDB.js
-│   ├── middleware/
-│   ├── routes/
-│   │   └── router.js
-│   ├── services/
-│   │   ├── api.service.js
-│   │   ├── githubService.js
-│   │   ├── scannerService.js
-│   │   ├── subscriptionService.js
-│   │   ├── api/
-│   │   └── email/
-│   │       └── emailService.js
+│   ├── db/
+│   │   ├── pool.js
+│   │   ├── migration.manager.js
+│   │   └── migrations/
+│   │       └── 01_scheme.sql
 │   ├── templates/
 │   │   ├── confirmation.html
 │   │   └── release-notification.html
 │   └── utils/
 │       └── paths.js
 └── tests/
-	├── e2e.ps1
-	├── email.manual.js
-	└── githubService.test.js
+    ├── e2e.ps1
+    ├── email.manual.js
+    └── githubService.test.js
 ```
 
-### Structure Notes
+### Layer Responsibilities
 
-- `src/app.js` is the application entry point and starts Fastify, migrations, and the scanner.
-- `src/routes/` defines the HTTP endpoints.
-- `src/controller/` connects request handlers to the service layer.
-- `src/services/` contains business logic, GitHub integration, email delivery, and background scanning.
-- `src/db/` contains the PostgreSQL connection, query helpers, and migrations.
-- `src/templates/` stores the email templates used for confirmation and release alerts.
-- `tests/` contains manual, end-to-end, and service-level test helpers.
+- `controller/`: HTTP handlers and response mapping.
+- `services/`: business logic, external API calls, email workflows, and scanner.
+- `repositories/`: SQL-level data access.
+- `db/`: connection pool and migration runner.
+- `templates/`: HTML email templates.
 
-## Getting Started
+## Quick Start (Local)
 
-### Prerequisites
-
-- Node.js 18+ recommended
-- PostgreSQL database
-- SMTP credentials for outbound email
-
-### Install dependencies
+### 1. Install dependencies
 
 ```bash
 npm install
 ```
 
-### Configure environment variables
-
-Create a `.env` file in the project root with the following values:
+### 2. Create `.env`
 
 ```env
 PORT=3000
@@ -101,89 +126,152 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=github_release_notifier
 DB_USER=postgres
-DB_PASSWORD=your_password
+DB_PASSWORD=postgres
 
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_USER=your_smtp_user
-SMTP_PASS=your_smtp_password
-EMAIL_FROM=noreply@your-domain.com
+SMTP_HOST=localhost
+SMTP_PORT=1025
+SMTP_USER=
+SMTP_PASS=
+EMAIL_FROM=noreply@github-notifier.com
 
-# Optional, improves GitHub API rate limits
-GITHUB_TOKEN=your_github_token
+GITHUB_TOKEN=
 ```
 
-## Run the app
-
-Start the API in development mode:
+### 3. Start the app
 
 ```bash
 npm run dev
 ```
 
-The server listens on `0.0.0.0` and uses the port from `PORT`.
+## Quick Start (Docker)
 
-## API Overview
+This project includes:
+- `db` (PostgreSQL)
+- `mailhog` (SMTP testing + web UI)
+- `server` (Fastify API)
 
-All routes are mounted under `/api`.
+### Run all services
 
-### Subscribe
+```bash
+docker compose up --build
+```
 
-`POST /api/subscribe`
+### Open services
+
+- API: `http://localhost:3000`
+- MailHog UI: `http://localhost:8025`
+
+## Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `PORT` | No | API port (default `3000`) |
+| `NODE_ENV` | No | `development` or `production` |
+| `BASE_URL` | Yes | Public base URL for email links |
+| `DB_HOST` | Yes | PostgreSQL host (`db` in Docker) |
+| `DB_PORT` | Yes | PostgreSQL port (usually `5432`) |
+| `DB_NAME` | Yes | Database name used by application |
+| `DB_USER` | Yes | Database user |
+| `DB_PASSWORD` | Yes | Database password |
+| `SMTP_HOST` | Yes | SMTP host (`mailhog` in Docker network) |
+| `SMTP_PORT` | Yes | SMTP port (`1025` for MailHog) |
+| `SMTP_USER` | No | SMTP auth user (empty for MailHog) |
+| `SMTP_PASS` | No | SMTP auth password (empty for MailHog) |
+| `EMAIL_FROM` | No | Sender email address |
+| `GITHUB_TOKEN` | No | Improves GitHub API rate limits |
+
+## API Reference
+
+Base path: `/api`
+
+### `POST /subscribe`
+
+Create a new pending subscription and send a confirmation email.
 
 Request body:
 
 ```json
 {
-	"email": "user@example.com",
-	"repo": "facebook/react"
+  "email": "user@example.com",
+  "repo": "facebook/react"
 }
 ```
 
-Behavior:
+Success response:
 
-- Validates the repository format.
-- Verifies that the repository exists on GitHub.
-- Creates a pending subscription.
-- Sends a confirmation email.
+```json
+{
+  "status": 201,
+  "message": "Confirmation letter was sent, check your email"
+}
+```
 
-### Confirm subscription
+### `GET /confirm/:token`
 
-`GET /api/confirm/:token`
+Confirm a pending subscription.
 
-Confirms a pending subscription using the confirmation token from the email.
+### `GET /unsubscribe/:token`
 
-### Unsubscribe
+Remove an existing subscription.
 
-`GET /api/unsubscribe/:token`
+### `GET /subscriptions?email=user@example.com`
 
-Removes a subscription using the unsubscribe token from the notification email.
+Fetch all confirmed subscriptions for an email.
 
-### List subscriptions
+## API Playground (cURL)
 
-`GET /api/subscriptions?email=user@example.com`
+```bash
+curl -X POST http://localhost:3000/api/subscribe \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","repo":"facebook/react"}'
+```
 
-Returns confirmed subscriptions for the given email address.
+```bash
+curl "http://localhost:3000/api/subscriptions?email=user@example.com"
+```
 
-## Database Schema
+## Testing
 
-The project uses two main tables:
+Run end-to-end script:
 
-- `repositories` stores repository names and the latest seen release tag.
-- `subscriptions` stores subscriber emails, confirmation tokens, unsubscribe tokens, and confirmation state.
+```bash
+npm run test:e2e
+```
 
-The initial migration is located at `src/db/migrations/01_scheme.sql`.
+Manual helpers are available in `tests/`.
 
-## Release Scanning
+## Troubleshooting
 
-The background scanner runs on a cron schedule and checks stored repositories for new GitHub releases. When a new release is found, it updates the last seen tag and sends notifications to all confirmed subscribers for that repository.
+<details>
+<summary>Connection timeout during migrations</summary>
 
-## Notes
+- Ensure PostgreSQL is running and reachable.
+- Ensure `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD` match the actual database.
+- In Docker, app container should use `DB_HOST=db` and internal DB port `5432`.
+</details>
 
-- Repository names must be provided in `owner/repo` format.
-- Only confirmed subscriptions receive release notifications.
-- Email delivery depends on a working SMTP server.
-- GitHub API requests can be rate-limited if `GITHUB_TOKEN` is not set.
+<details>
+<summary>Emails are not arriving</summary>
+
+- Check SMTP variables.
+- If using MailHog, use `SMTP_HOST=mailhog` and `SMTP_PORT=1025` in Docker.
+- Open `http://localhost:8025` to inspect captured emails.
+</details>
+
+<details>
+<summary>GitHub rate limit errors (429/403)</summary>
+
+- Set `GITHUB_TOKEN` in your environment.
+- Retry after the rate limit window resets.
+</details>
+
+## Roadmap Ideas
+
+- Add request validation schema for Fastify routes.
+- Add unit tests for services and repositories.
+- Add OpenAPI/Swagger documentation.
+- Add retry strategy for transient GitHub and SMTP failures.
+- Add metrics and health endpoints (`/health`, `/ready`).
 
 ## License
 
