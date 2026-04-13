@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 
 import surbscribeDB from '../db/surbscribeDB.js';
+import confirmSubscriptionDB from '../db/confirmSubscriptionDB.js';
 import { sendConfirmationEmail } from './email/emailService.js';
 import {
     isValidRepoFormat,
@@ -35,13 +36,14 @@ export async function subscribeService(reqBody) {
 
 export async function confirmSubscriptionService(token) {
     try {
-        //await confirmSubscriptionDB(token);
+        await confirmSubscriptionDB(token);
 
         return { status: 200, message: "Confirmed!" };
     } catch (err) {
+        const status = err.status;
         return { 
-            status: 500, 
-            message: err.message || "token is incorrect" 
+            status: status || 500, 
+            message: err.message || "Server error" 
         };
     }
 }
