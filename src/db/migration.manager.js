@@ -13,8 +13,9 @@ async function runMigrations() {
         .filter((el) => el.endsWith(".sql"))
         .sort();
 
+    let client;
     try {
-        const client = await pool.connect();
+        client = await pool.connect();
 
         await client.query(`
             CREATE TABLE IF NOT EXISTS migrations (
@@ -49,7 +50,7 @@ async function runMigrations() {
             console.log("migrations completed");
         }
     } catch (err) {
-        await client.query("ROLLBACK");
+        if (client) await client.query("ROLLBACK");
         console.error("failed to migrate", err.message);
         throw err;
     } finally {
