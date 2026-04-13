@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import routes from "./routes/router.js";
-import runMigrations from './db/migration.manager.js';
+import runMigrations from "./db/migration.manager.js";
 
 const PORT = parseInt(process.env.PORT || "3000");
 
@@ -15,8 +15,32 @@ const port = {
     port: PORT,
     host: "0.0.0.0",
 };
- 
-    fastify.register(routes, { prefix: "/api", });
+
+fastify.setErrorHandler((err, request, reply) => {
+    const status = err.status || err.statusCode || 500;
+
+    let message = err.message || "Internal server error";
+
+    if (status >= 500) {
+        request.log.error(`!!!Error in request: 
+        METHOD: ${request.method}
+        URL ${request.url}, 
+        error: ${err}`);
+
+        message = "unexpected Internal server error";
+    } else {
+        request.log.warn(`Users error:
+        STATUS: ${status}
+        MESSAGE ${message}`);
+    }
+
+    reply.code(status).send({
+        status: status,
+        message: message,
+    });
+});
+
+fastify.register(routes, { prefix: "/api" });
 
 try {
     await runMigrations();
