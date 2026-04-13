@@ -4,7 +4,7 @@ dotenv.config();
 
 import routes from "./routes/router.js";
 import runMigrations from "./db/migration.manager.js";
-import startScanner from "./services/scannerService.js";
+import startScanner from "./services/scanner.service.js";
 
 const PORT = parseInt(process.env.PORT || "3000");
 

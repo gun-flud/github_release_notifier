@@ -1,10 +1,10 @@
 import cron from "node-cron";
 
-import scanDB from "../db/scanUpdates/scanDB.js";
-import { getLatestRelease } from "./githubService.js";
+import scanDB from "../repositories/scanUpdates/scanDB.js";
+import { getLatestRelease } from "./github.service.js";
 import { sendReleaseNotificationEmail } from "./email/emailService.js";
-import updateLastSeenDB from "../db/scanUpdates/updateLastSeenDB.js";
-import getSubscribersForRepoDB from "../db/scanUpdates/getSubscribersForRepoDB.js";
+import updateLastSeenDB from "../repositories/scanUpdates/updateLastSeenDB.js";
+import getSubscribersForRepoDB from "../repositories/scanUpdates/getSubscribersForRepoDB.js";
 
 async function scanRepositories() {
     const repos = await scanDB();

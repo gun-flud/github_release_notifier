@@ -1,4 +1,4 @@
-import { pool } from "../pool.js";
+import { pool } from "../../db/pool.js";
 
 export default async function updateLastSeenDB(id, lastVersion) {
     try {
