@@ -4,7 +4,8 @@ export default async function confirmSubscriptionDB (token) {
     const { rows } = await pool.query(
         `UPDATE subscriptions SET confirmed = TRUE
         WHERE confirm_token = $1
-        AND confirmed = FALSE`, [token]
+        AND confirmed = FALSE
+        RETURNING id`, [token]
     );
 
     if (rows.length === 0) {

@@ -1,23 +1,21 @@
-import crypto from 'node:crypto';
+import crypto from "node:crypto";
 
-import surbscribeDB from '../db/surbscribeDB.js';
-import confirmSubscriptionDB from '../db/confirmSubscriptionDB.js';
-import { sendConfirmationEmail } from './email/emailService.js';
-import {
-    isValidRepoFormat,
-    verifyRepository,
-    getLatestRelease,
-} from "./githubService.js";
+import surbscribeDB from "../db/surbscribeDB.js";
+import confirmSubscriptionDB from "../db/confirmSubscriptionDB.js";
+import unsubscribeDB from "../db/unsubscribeDB.js";
+import selectSubscriptionsDB from "../db/selectSubscriptionsDB.js";
+import { sendConfirmationEmail } from "./email/emailService.js";
+import { verifyRepository } from "./githubService.js";
 
 export async function subscribeService(reqBody) {
     try {
         const { email, repo } = reqBody;
-        const confirmToken = crypto.randomUUID()
-        const unsubscribeToken = crypto.randomUUID()
+        const confirmToken = crypto.randomUUID();
+        const unsubscribeToken = crypto.randomUUID();
 
         const data = await verifyRepository(repo);
 
-        await surbscribeDB(email, repo, confirmToken, unsubscribeToken);//will be for storing values into server
+        await surbscribeDB(email, repo, confirmToken, unsubscribeToken); //will be for storing values into server
 
         await sendConfirmationEmail(email, confirmToken, repo);
 
@@ -40,36 +38,35 @@ export async function confirmSubscriptionService(token) {
 
         return { status: 200, message: "Confirmed!" };
     } catch (err) {
-        const status = err.status;
-        return { 
-            status: status || 500, 
-            message: err.message || "Server error" 
+        return {
+            status: err.status || 500,
+            message: err.message || "Server error",
         };
     }
 }
 
 export async function unsubscribeService(token) {
     try {
-        //await unsubscribeDB(token);
+        await unsubscribeDB(token);
 
-        return { status: 200, message: "Confirmed!" };
+        return { status: 200, message: "Unsubscribed successfully!" };
     } catch (err) {
-        return { 
-            status: 500, 
-            message: err.message || "token is incorrect" 
+        return {
+            status: err.status || 500,
+            message: err.message || "Server error",
         };
     }
 }
 
 export async function subscriptionsService(email) {
     try {
-        //await selectSubscriptionsDB(email);
+        const data = await selectSubscriptionsDB(email);
 
-        return { status: 200, message: "Confirmed!" };
+        return { status: 200, message: data };
     } catch (err) {
-        return { 
-            status: 500, 
-            message: err.message || "token is incorrect" 
+        return {
+            status: err.status || 500,
+            message: err.message || "token is incorrect",
         };
     }
 }
